@@ -1744,9 +1744,8 @@ def where(cond, x, y, keep_attrs=None):
     y : scalar, array, Variable, DataArray or Dataset
         values to choose from where `cond` is False
     keep_attrs : bool, optional
-        If True, the attributes (`attrs`) will be copied from the first
-        DataArray input to the new one. If False, the new object will be
-        returned without attributes.
+        If True, the attributes (`attrs`) from `x` will be copied to the new
+        object. If False, the new object will be returned without attributes.
 
     Returns
     -------
@@ -1813,6 +1812,11 @@ def where(cond, x, y, keep_attrs=None):
         equivalent methods
     """
     # alignment for three arguments is complicated, so don't support it yet
+    if keep_attrs is None:
+        keep_attrs = _get_keep_attrs(default=False)
+    if keep_attrs is True:
+        keep_attrs = lambda attrs, context: getattr(x, "attrs", {})
+
     return apply_ufunc(
         duck_array_ops.where,
         cond,
