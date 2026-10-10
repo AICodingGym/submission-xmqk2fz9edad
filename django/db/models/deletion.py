@@ -219,11 +219,16 @@ class Collector:
                 for batch in batches:
                     sub_objs = self.related_objects(related, batch)
                     if not (sub_objs.query.select_related or
-                            self.can_fast_delete(sub_objs, from_field=field)):
+                            self.can_fast_delete(sub_objs, from_field=field) or
+                            signals.pre_delete.has_listeners(sub_objs.model) or
+                            signals.post_delete.has_listeners(sub_objs.model)):
                         field_names = [
                             related_field.name
                             for related_field in field.foreign_related_fields
-                            if related_field in sub_objs.model._meta.concrete_fields
+                            if related_field.name in {
+                                concrete_field.name
+                                for concrete_field in sub_objs.model._meta.concrete_fields
+                            }
                         ]
                         if not field_names:
                             field_names = [
