@@ -221,19 +221,20 @@ class Collector:
                     if not (sub_objs.query.select_related or
                             self.can_fast_delete(sub_objs, from_field=field) or
                             signals.pre_delete.has_listeners(sub_objs.model) or
-                            signals.post_delete.has_listeners(sub_objs.model)):
-                        field_names = [
-                            related_field.name
+                            signals.post_delete.has_listeners(sub_objs.model) or
+                            signals.m2m_changed.has_listeners(sub_objs.model)):
+                        if any(
+                            related_field.remote_field and related_field.remote_field.parent_link
                             for related_field in field.foreign_related_fields
-                            if related_field.name in {
-                                concrete_field.name
-                                for concrete_field in sub_objs.model._meta.concrete_fields
-                            }
-                        ]
-                        if not field_names:
+                        ):
                             field_names = [
                                 related_field.name
                                 for related_field in field.local_related_fields
+                            ]
+                        else:
+                            field_names = [
+                                related_field.name
+                                for related_field in field.foreign_related_fields
                             ]
                         sub_objs = sub_objs.only(
                             'pk',
