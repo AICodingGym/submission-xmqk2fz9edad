@@ -218,6 +218,11 @@ class Collector:
                 batches = self.get_del_batches(new_objs, field)
                 for batch in batches:
                     sub_objs = self.related_objects(related, batch)
+                    if not (sub_objs.query.select_related or
+                            self.can_fast_delete(sub_objs, from_field=field)):
+                        sub_objs = sub_objs.only(
+                            *[field.name for field in related.field.local_related_fields]
+                        )
                     if self.can_fast_delete(sub_objs, from_field=field):
                         self.fast_deletes.append(sub_objs)
                     elif sub_objs:
