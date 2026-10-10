@@ -220,8 +220,19 @@ class Collector:
                     sub_objs = self.related_objects(related, batch)
                     if not (sub_objs.query.select_related or
                             self.can_fast_delete(sub_objs, from_field=field)):
+                        field_names = [
+                            related_field.name
+                            for related_field in field.foreign_related_fields
+                            if related_field in sub_objs.model._meta.concrete_fields
+                        ]
+                        if not field_names:
+                            field_names = [
+                                related_field.name
+                                for related_field in field.local_related_fields
+                            ]
                         sub_objs = sub_objs.only(
-                            *[field.name for field in related.field.local_related_fields]
+                            'pk',
+                            *field_names
                         )
                     if self.can_fast_delete(sub_objs, from_field=field):
                         self.fast_deletes.append(sub_objs)
